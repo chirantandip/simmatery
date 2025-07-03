@@ -1,34 +1,36 @@
-let currentModel = 'cahn-hilliard';
-let ctx = document.getElementById('canvas').getContext('2d');
+let simCTX  = document.getElementById('canvas').getContext('2d');
+let simModel;
+let simRequest;
 
-let phi;
-let isingGrid;
-let simulationInterval;
+const simCahn  = 'cahn-hilliard';
+const simIsing = 'ising';
 
-let deltaX   = 1.0;
+let FIELD;
+let FIELD_NEXT;
+let FIELD_MU;
+
 let gridSize = 128;
 let running  = false;
 
-let ch_timeStep = 0.02;  
-let ch_mobility = 0.3;
-let ch_kappa    = 0.3;
-let ch_Wcoeff   = 1.0;
+let cahn_dx = 1.0;
+let cahn_dt = 0.25;  
+let cahn_M  = 0.25; /// Mobility
+let cahn_K  = 0.25; /// Kappa
+let cahn_W  = 0.99; /// Double well energy
 
-let ising_T = 2.269; 
-let ising_B    = 0.0; 
-let ising_J    = 1.0; 
-const is_Kb = 1.0;
+let ising_T = 2.0;  /// Temperature
+let ising_B = 0.0;  /// Magnetif field
+let ising_J = 1.2;  /// Coupling constant
+let ising_N = 1;    /// neighborhood
 
-function sim_resizeCanvas()
-{
+function sim_resizeCanvas() {
     const canvas  = document.getElementById('canvas');
-    canvas.width  = window.innerWidth - 320;
     canvas.height = window.innerHeight;
+    canvas.width  = window.innerWidth - 400;
 
-    const minCanvasDim = Math.min(canvas.width, canvas.height);
-    const maxGridSize  = Math.floor(minCanvasDim / 3); 
-    
+    const maxGridSize   = Math.floor(Math.min(canvas.width, canvas.height) / 3); 
     const gridSizeInput = document.getElementById('gridSizeInput');
+
     gridSizeInput.setAttribute('max', maxGridSize);
 
     if (gridSize > maxGridSize) {
@@ -41,153 +43,151 @@ function sim_resizeCanvas()
     sim_drawGrid();
 }
 
-function sim_initModelGrid()
-{
+function sim_initModelGrid() {
     sim_Stop();
+    if (simModel === simCahn) {
+        FIELD       = Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => 0.5 + (Math.random() - 0.5) * 0.4));
+        FIELD_NEXT  = Array.from({ length: gridSize }, () => Array(gridSize).fill(0));
+        FIELD_MU    = Array.from({ length: gridSize }, () => Array(gridSize).fill(0));
 
-    if (currentModel === 'cahn-hilliard')
-    {
-        phi = Array.from({ length: gridSize }, () => 
-            Array.from({ length: gridSize }, () => 0.5 + (Math.random() - 0.5) * 0.4)
-        );
-
-    } else if (currentModel === 'ising')
-    {
-        isingGrid = Array.from({ length: gridSize }, () =>
-            Array.from({ length: gridSize }, () => (Math.random() < 0.5 ? 1 : -1))
-        );
+    } else if (simModel === simIsing) {
+        FIELD       = Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => (Math.random() < 0.5 ? 1 : -1)));
     }
 }
 
-function hexToRgb(hex) {
-    const bigint = parseInt(hex.slice(1), 16);
-    const r = (bigint >> 16) & 255;
-    const g = (bigint >> 8) & 255;
-    const b = bigint & 255;
-    return [r, g, b];
-}
+function sim_drawGrid() {
+    simCTX.clearRect(0, 0, simCTX.canvas.width, simCTX.canvas.height);
 
-// Generated
-function sim_drawGrid()
-{
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    const renderCellSize = ctx.canvas.width / gridSize;
+    const cellSize = simCTX.canvas.width / gridSize;
 
-    // Define colors for both models
-    const colorHexA = "#0D5EA6";
-    const colorHexB = "#EAA64D"; 
-
-    const rgbA = hexToRgb(colorHexA);
-    const rgbB = hexToRgb(colorHexB);
+    const rgbA = [13, 94, 166];
+    const rgbB = [234,166, 77];
+    let val;
 
     for (let x = 0; x < gridSize; x++) {
         for (let y = 0; y < gridSize; y++) {
-            let normalizedValue;
 
-            if (currentModel === 'cahn-hilliard') {
-                normalizedValue = phi[x][y];
-            } else if (currentModel === 'ising') {
-                normalizedValue = (isingGrid[x][y] + 1) / 2; 
+            if (simModel === simCahn) {
+                val = FIELD[x][y];
+            } else if (simModel === simIsing) {
+                val = (FIELD[x][y] + 1) / 2; 
             }
 
-            const red   = Math.floor(rgbA[0] + (rgbB[0] - rgbA[0]) * normalizedValue);
-            const green = Math.floor(rgbA[1] + (rgbB[1] - rgbA[1]) * normalizedValue);
-            const blue  = Math.floor(rgbA[2] + (rgbB[2] - rgbA[2]) * normalizedValue);
+            const red   = Math.floor(rgbA[0] + (rgbB[0] - rgbA[0]) * val);
+            const green = Math.floor(rgbA[1] + (rgbB[1] - rgbA[1]) * val);
+            const blue  = Math.floor(rgbA[2] + (rgbB[2] - rgbA[2]) * val);
 
-            ctx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
-            ctx.fillRect(x * renderCellSize, y * renderCellSize, renderCellSize, renderCellSize);
+            simCTX.fillStyle = `rgb(${red}, ${green}, ${blue})`;
+            simCTX.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
         }
     }
 }
 
-function atGrid(grid, x, y)
-{
+function atGrid(grid, x, y) {
     return grid[(x + gridSize) % gridSize][(y + gridSize) % gridSize];
 }
 
-function lapGrid(field, x, y)
-{
+function lapGrid(field, x, y) {
     return (atGrid(field, x + 1, y) + atGrid(field, x - 1, y) +
-            atGrid(field, x, y + 1) + atGrid(field, x, y - 1) - 4 * atGrid(field, x, y)) / (deltaX * deltaX);
+            atGrid(field, x, y + 1) + atGrid(field, x, y - 1) - 4 * atGrid(field, x, y)) / (cahn_dx * cahn_dx);
 }
 
-function sim_cahnHilliardStep()
-{
-    const mu     = Array.from({ length: gridSize }, () => Array(gridSize).fill(0));
-    const newPhi = Array.from({ length: gridSize }, () => Array(gridSize).fill(0));
-
+function sim_cahnHilliardStep() {
     for (let x = 0; x < gridSize; x++) {
         for (let y = 0; y < gridSize; y++) {
-            const phiVal = atGrid(phi, x, y);
-            const f_prime_phi = 2 * ch_Wcoeff * phiVal * (1 - phiVal) * (1 - 2 * phiVal);
-            mu[x][y] = f_prime_phi - ch_kappa * lapGrid(phi, x, y);
+            const phi       = atGrid(FIELD, x, y);
+            const dwdphi    = 2 * cahn_W * phi * (1 - phi) * (1 - 2 * phi);
+            FIELD_MU[x][y]  = dwdphi - cahn_K * lapGrid(FIELD, x, y);
+        }
+    }
+    for (let x = 0; x < gridSize; x++) {
+        for (let y = 0; y < gridSize; y++) {
+            FIELD_NEXT[x][y] = atGrid(FIELD, x, y) + cahn_dt * cahn_M * lapGrid(FIELD_MU, x, y);
+            FIELD_NEXT[x][y] = Math.max(0, Math.min(1, FIELD_NEXT[x][y]));
         }
     }
 
-    for (let x = 0; x < gridSize; x++) {
-        for (let y = 0; y < gridSize; y++) {
-            const lapMu = lapGrid(mu, x, y);
-            newPhi[x][y] = atGrid(phi, x, y) + ch_timeStep * ch_mobility * lapMu;
-            newPhi[x][y] = Math.max(0, Math.min(1, newPhi[x][y]));
-        }
-    }
-
-    phi = newPhi;
+    const tmp = FIELD;
+    FIELD = FIELD_NEXT;
+    FIELD_NEXT = tmp;
 }
 
-function sim_isingStep()
-{
+function sim_isingStep() {
     for (let i = 0; i < gridSize * gridSize; i++) {
-
         const x = Math.floor(Math.random() * gridSize);
         const y = Math.floor(Math.random() * gridSize);
 
-        const currentSpin = atGrid(isingGrid, x, y);
+        const spin = atGrid(FIELD, x, y);
+        let sum = 0;
 
-        // Calculate sum of neighbor spins
-        const sumNeighbors = atGrid(isingGrid, x + 1, y) +
-                             atGrid(isingGrid, x - 1, y) +
-                             atGrid(isingGrid, x, y + 1) +
-                             atGrid(isingGrid, x, y - 1);
+        /// 4 point nbh
+        if (ising_N === 1) {
 
-        const deltaE = 2 * ising_J * currentSpin * sumNeighbors + 2 * ising_B * currentSpin;
+            sum =   atGrid(FIELD, x + 1, y) + atGrid(FIELD, x - 1, y)
+                +   atGrid(FIELD, x, y + 1) + atGrid(FIELD, x, y - 1);
 
-        if (deltaE < 0) {
-            isingGrid[x][y] *= -1;
-        } else {
-            const p = Math.exp(-deltaE / (is_Kb * ising_T));
-            if (Math.random() < p) {
-                isingGrid[x][y] *= -1;
+        } 
+        /// 8 point nbh
+        else if (ising_N === 2) {
+
+            sum =   atGrid(FIELD, x - 1, y - 1) +  atGrid(FIELD, x,     y - 1)
+                +   atGrid(FIELD, x + 1, y - 1) +  atGrid(FIELD, x - 1, y    )
+                +   atGrid(FIELD, x + 1, y    ) +  atGrid(FIELD, x - 1, y + 1)
+                +   atGrid(FIELD, x,     y + 1) +  atGrid(FIELD, x + 1, y + 1); 
+        } 
+        /// other nbh
+        else {
+            for (let dx = -ising_N; dx <= ising_N; dx++) {
+                for (let dy = -ising_N; dy <= ising_N; dy++) {
+                    if (dx === 0 && dy === 0) continue;
+                    sum += atGrid(FIELD, x + dx, y + dy) / Math.pow(Math.sqrt(dx * dx + dy * dy), 2);
+                }
             }
+        }
+
+        const deltaE = 2 * spin * (ising_J * sum + ising_B);
+
+        if ((deltaE < 0) || (Math.random() < Math.exp(-deltaE / ising_T))) 
+        {
+            FIELD[x][y] *= -1;
         }
     }
 }
 
-function sim_Run(){
-    if (currentModel === 'cahn-hilliard') {
+
+function sim_Run() {
+    if (simModel === simCahn) {
         sim_cahnHilliardStep();
-    } else if (currentModel === 'ising') {
+    } 
+    else if (simModel === simIsing) {
         sim_isingStep();
     }
+
     sim_drawGrid();
+
+    if (running) {
+        simRequest = requestAnimationFrame(sim_Run);
+    }
 }
 
 function sim_Start() {
     if (!running) {
-        simulationInterval = setInterval(sim_Run, 10);
         running = true;
+        simRequest = requestAnimationFrame(sim_Run);
         document.getElementById('startBtn').disabled = true;
-        document.getElementById('stopBtn').disabled = false;
+        document.getElementById('stopBtn').disabled  = false;
         document.getElementById('resetBtn').disabled = true;
     }
 }
 
 function sim_Stop() {
-    clearInterval(simulationInterval);
-    running = false;
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = true;
-    document.getElementById('resetBtn').disabled = false;
+    if (running) {
+        cancelAnimationFrame(simRequest);
+        running = false;
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled  = true;
+        document.getElementById('resetBtn').disabled = false;
+    }
 }
 
 function sim_Reset() {
@@ -195,7 +195,7 @@ function sim_Reset() {
     sim_initModelGrid();
     sim_drawGrid();
     document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = true;
+    document.getElementById('stopBtn').disabled  = true;
     document.getElementById('resetBtn').disabled = false;
 }
 
@@ -206,7 +206,7 @@ function sim_UpdateGridSize(event) {
     sim_initModelGrid();
     sim_drawGrid();
     document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = true;
+    document.getElementById('stopBtn').disabled  = true;
     document.getElementById('resetBtn').disabled = false;
 }
 
@@ -230,7 +230,6 @@ function sim_createSliderControl(paramDiv, { id, labelPrefix, min, max, step, va
         const newValue = parseFloat(e.target.value);
         onChange(newValue);
         label.textContent = `${labelPrefix} = ${toFixed ? newValue.toFixed(toFixed) : newValue.toExponential(6)}`;
-        // if (running) sim_Stop();
     });
 
     paramDiv.appendChild(label);
@@ -241,7 +240,7 @@ function sim_SetInputParmeters() {
     const paramDiv = document.getElementById('parameters');
     paramDiv.innerHTML = '';
 
-    if (currentModel === 'cahn-hilliard') {
+    if (simModel === simCahn) {
         
         sim_createSliderControl(paramDiv, {
             id: 'dxLabel',
@@ -249,9 +248,9 @@ function sim_SetInputParmeters() {
             min: 0.1,
             max: 5,
             step: 0.01,
-            value: deltaX,
+            value: cahn_dx,
             toFixed: 2,
-            onChange: (val) => { deltaX = val; }
+            onChange: (val) => { cahn_dx = val; }
         });
 
         sim_createSliderControl(paramDiv, {
@@ -260,9 +259,9 @@ function sim_SetInputParmeters() {
             min: 0.001,
             max: 1,
             step: 0.001,
-            value: ch_timeStep,
-            toFixed: 4, // Exponential display
-            onChange: (val) => { ch_timeStep = val; }
+            value: cahn_dt,
+            toFixed: 4,
+            onChange: (val) => { cahn_dt = val; }
         });
         
         sim_createSliderControl(paramDiv, {
@@ -271,9 +270,9 @@ function sim_SetInputParmeters() {
             min: 0.01,
             max: 1.0,
             step: 0.005,
-            value: ch_mobility,
+            value: cahn_M,
             toFixed: 2,
-            onChange: (val) => { ch_mobility = val; }
+            onChange: (val) => { cahn_M = val; }
         });
         
         sim_createSliderControl(paramDiv, {
@@ -282,9 +281,9 @@ function sim_SetInputParmeters() {
             min: 0.01,
             max: 1.0,
             step: 0.005,
-            value: ch_kappa,
+            value: cahn_K,
             toFixed: 2,
-            onChange: (val) => { ch_kappa = val; }
+            onChange: (val) => { cahn_K = val; }
         });
         
         sim_createSliderControl(paramDiv, {
@@ -293,12 +292,12 @@ function sim_SetInputParmeters() {
             min: 0.1,
             max: 2.0,
             step: 0.1,
-            value: ch_Wcoeff,
+            value: cahn_W,
             toFixed: 2,
-            onChange: (val) => { ch_Wcoeff = val; }
+            onChange: (val) => { cahn_W = val; }
         });
 
-    } else if (currentModel === 'ising') {
+    } else if (simModel === simIsing) {
 
         sim_createSliderControl(paramDiv, {
             id: 'T',
@@ -332,6 +331,18 @@ function sim_SetInputParmeters() {
             toFixed: 2,
             onChange: (val) => { ising_J = val; }
         });
+
+        sim_createSliderControl(paramDiv, {
+            id: 'N',
+            labelPrefix: 'Neighborhood (N)',
+            min: 1,
+            max: 5,
+            step: 1,
+            value: ising_N,
+            toFixed: 2,
+            onChange: (val) => { ising_N = val; }
+        });
+
     }
 }
 
@@ -347,22 +358,21 @@ window.onload = () => {
         event.stopPropagation();
     });
 
-    // Handle dropdown item clicks
     dropdownContent.querySelectorAll('.dropdown-item').forEach(item => {
         item.addEventListener('click', function(event) {
             event.preventDefault();
             const selectedModel = this.getAttribute('data-model');
-            // if (selectedModel !== currentModel) {
-                currentModel = selectedModel;
-                // Update header text to reflect chosen model
-                menuToggle.firstChild.textContent = this.textContent + ' '; // Add space back for icon
-                
-                sim_Stop();
-                sim_initModelGrid();
-                sim_SetInputParmeters();
-                sim_drawGrid();
-            // }
-            dropdownContent.classList.remove('show'); // Close dropdown
+
+            simModel = selectedModel;
+
+            menuToggle.firstChild.textContent = this.textContent + ' ';
+            
+            sim_Stop();
+            sim_initModelGrid();
+            sim_SetInputParmeters();
+            sim_drawGrid();
+
+            dropdownContent.classList.remove('show'); 
             menuToggle.classList.remove('active');
         });
     });
@@ -384,6 +394,5 @@ window.onload = () => {
     window.addEventListener('resize', sim_resizeCanvas);
 
     sim_resizeCanvas();
-    // sim_SetInputParmeters();
     sim_Stop();
 };
