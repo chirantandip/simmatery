@@ -192,19 +192,12 @@
 /* .canvas-container {
     flex: 1;
     overflow: hidden;
-}
-
-.full-canvas {
-    width: calc(100vw - 400px);
-    height: 100vh;
-    display: block;
 } */
-
-
 .canvas-container {
+    flex: 1;
     width: calc(100vw - 400px); 
     height: 100vh;
-    background-color: #f0f0f0;
+    /* background-color: #f0f0f0; */
     
     display: flex;
     justify-content: center;
@@ -212,9 +205,15 @@
     overflow: hidden;
 }
 
-.square-canvas {
+.full-canvas {
+    width: calc(100vw - 400px);
+    height: 100vh;
     display: block;
 }
+
+/* .square-canvas {
+    display: block;
+} */
 
 
 /* Dropdown Menu Specific Styles */
