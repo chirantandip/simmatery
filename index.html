@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimMatery</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="font-sans">
+<div class="root-container">
+    <div class="sidebar-container">
+        <div class="sidebar-top-fixed">
+            <div class="dropdown-menu-container">
+
+                <h2 class="sidebar-header dropdown-toggle" id="menuToggle">Choose Model<span class="dropdown-icon">▼</span></h2>
+
+                <div class="dropdown-content" id="dropdownContent">
+                    <a href="#" class="dropdown-item" data-model="cahn-hilliard">Cahn-Hilliard Model</a>
+                    <a href="#" class="dropdown-item" data-model="ising">Ising Model</a>
+                </div>
+            </div>
+
+            <div class="sidebar-label sidebar-label-section" style="margin-top: 0;">Grid Size:</div>
+            <input type="range" id="gridSizeInput" min="64" max="256" value="128" class="sidebar-input-range">
+            <div id="gridSizeLabel" class="sidebar-label-small">Size: 128 x 128</div>
+
+        </div>
+
+        <div id="parameters-scroll-container" class="sidebar-parameters-scroll">
+            <div id="parameters" class="sidebar-section"></div>
+        </div>
+
+        <div class="sidebar-bottom-fixed">
+            <div class="sidebar-label sidebar-label-section">Controls:</div>
+            <div class="sidebar-section controls">
+                <button id="startBtn" class="sidebar-button green">Start</button>
+                <button id="stopBtn" class="sidebar-button red">Stop</button>
+                <button id="resetBtn" class="sidebar-button blue">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="canvas" class="full-canvas"></canvas>
+    </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

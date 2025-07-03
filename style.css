@@ -1,0 +1,261 @@
+/* Generated */
+ body {
+    margin: 0;
+    font-family: sans-serif;
+    background-color: #f3f4f6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Root Container */
+.root-container {
+    display: flex;
+    flex: 1; /* flex-1 */
+    overflow: hidden;
+    height: 100vh; /* Ensure full height */
+}
+
+/* Sidebar Styles */
+.sidebar-container {
+    width: 320px; /* w-80 (80 * 4px = 320px) */
+    background-color: #1f2937; /* bg-gray-800 - a slightly darker gray for better contrast */
+    color: #ffffff; /* text-white */
+    padding: 24px; /* p-6 */
+    display: flex; /* flex */
+    flex-direction: column; /* flex-col */
+    box-sizing: border-box; /* Include padding in width */
+    height: 100vh; /* Make sidebar fill full height for flex children */
+}
+
+/* Fixed Top Section of Sidebar (Header + Grid Size) */
+.sidebar-top-fixed {
+    flex-shrink: 0; /* Prevents this section from shrinking */
+    padding-bottom: 16px; /* Add some space before scrollable area */
+    border-bottom: 1px solid #4b5563; /* Separator */
+    margin-bottom: 16px; /* Space after separator */
+}
+
+/* Scrollable Parameters Section */
+.sidebar-parameters-scroll {
+    flex-grow: 1; /* Allows this section to take up available space */
+    overflow-y: auto; /* Adds scrollbar if content overflows */
+    padding-right: 8px; /* Add some padding to prevent scrollbar from touching content */
+    margin-right: -8px; /* Counteract padding to keep total width same */
+}
+
+/* Fixed Bottom Section of Sidebar (Controls + Note) */
+.sidebar-bottom-fixed {
+    flex-shrink: 0; /* Prevents this section from shrinking */
+    padding-top: 16px; /* Space above fixed controls */
+    border-top: 1px solid #4b5563; /* Separator */
+    margin-top: 16px; /* Space before separator */
+}
+
+.sidebar-header {
+    font-size: 24px; /* text-2xl */
+    font-weight: 800; /* font-extrabold */
+    margin-bottom: 16px; /* mb-4 */
+    text-align: center; /* text-center */
+    padding-bottom: 12px; /* pb-3 */
+    /* Removed border-bottom as it's now on sidebar-top-fixed */
+}
+
+.sidebar-section {
+    display: flex; /* flex */
+    flex-direction: column; /* flex-col */
+    gap: 8px; /* gap-2 */
+    margin-top: 8px; /* mt-2 */
+}
+
+.sidebar-section.controls {
+    gap: 12px; /* gap-3 */
+}
+
+.sidebar-label {
+    display: block; /* display: block */
+    margin-top: 8px; /* mt-2 (or mt-4 if specific) */
+    margin-bottom: 4px; /* mb-2 */
+    font-weight: 600; /* font-semibold */
+    font-size: 16px; /* For general section titles */
+}
+
+.sidebar-label-small {
+    font-size: 14px; /* text-sm */
+    color: #d1d5db; /* text-gray-300 */
+    text-align: center;
+}
+
+/* Styles for number inputs */
+.sidebar-input-number {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #4b5563;
+    background-color: #374151; /* Darker background for input */
+    color: #ffffff;
+    font-size: 1rem;
+    box-sizing: border-box;
+    -moz-appearance: textfield; /* Hide spin buttons for Firefox */
+}
+.sidebar-input-number::-webkit-inner-spin-button, 
+.sidebar-input-number::-webkit-outer-spin-button {
+    -webkit-appearance: none; /* Hide spin buttons for Webkit */
+    margin: 0;
+}
+
+/* Range Input (Grid Size) */
+.sidebar-input-range {
+    -webkit-appearance: none;
+    width: 100%; /* w-full */
+    height: 8px;
+    background: #4A90E2; /* Blue track */
+    outline: none;
+    opacity: 0.8;
+    transition: opacity .2s;
+    border-radius: 4px;
+}
+
+.sidebar-input-range:hover {
+    opacity: 1;
+}
+
+.sidebar-input-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #3B82F6;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+.sidebar-input-range::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #3B82F6;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+/* Buttons */
+.sidebar-button {
+    padding: 12px 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    display: flex; /* Changed to flex to center text */
+    align-items: center; /* Center text vertically */
+    justify-content: center; /* Center text horizontally */
+    color: #ffffff;
+    transition: all 0.2s ease-in-out;
+    border: none;
+    cursor: pointer;
+    text-decoration: none; /* In case anchor tags are used */
+}
+
+.sidebar-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.sidebar-button.green { background-color: #22c55e; }
+.sidebar-button.green:hover { background-color: #16a34a; }
+.sidebar-button.red { background-color: #ef4444; }
+.sidebar-button.red:hover { background-color: #dc2626; }
+.sidebar-button.blue { background-color: #3b82f6; }
+.sidebar-button.blue:hover { background-color: #2563eb; }
+
+/* Removed sidebar-button i styles as icons are gone */
+
+.sidebar-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.sidebar-note {
+    font-size: 12px; /* text-xs */
+    color: #9ca3af; /* text-gray-400 */
+    padding-top: 16px; /* pt-4 */
+    margin-top: 16px; /* Added to separate from buttons */
+}
+
+.sidebar-note p {
+    margin-bottom: 4px; /* mb-1 */
+}
+
+/* Canvas Container */
+.canvas-container {
+    flex: 1; /* flex-1 */
+    overflow: hidden;
+}
+
+.full-canvas {
+    width: calc(100vw - 320px); /* Adjust for sidebar width */
+    height: 100vh;
+    display: block; /* Remove extra space below canvas */
+}
+
+/* Dropdown Menu Specific Styles */
+.dropdown-menu-container {
+    position: relative;
+    display: inline-block; /* Allows width to fit content */
+    width: 100%; /* Take full width of parent */
+    text-align: center; /* Center the title */
+    margin-bottom: 16px; /* Space between dropdown and grid size */
+}
+
+.dropdown-toggle {
+    cursor: pointer;
+    padding: 8px 0; /* Add some padding for click area */
+    display: block; /* Make it a block for full width click */
+    user-select: none; /* Prevent text selection on click */
+}
+
+/* Style for the Unicode dropdown icon */
+.dropdown-toggle .dropdown-icon {
+    margin-left: 8px; /* Space for the icon */
+    display: inline-block; /* Allows transform to apply correctly */
+    transition: transform 0.2s ease-in-out;
+}
+
+.dropdown-toggle.active .dropdown-icon {
+    transform: rotate(180deg); /* Rotate icon when active */
+}
+
+.dropdown-content {
+    display: none; /* Hidden by default */
+    position: absolute;
+    background-color: #374151; /* Darker background for dropdown */
+    min-width: 200px; /* Wider to accommodate model names */
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    border-radius: 4px;
+    left: 50%; /* Center dropdown content */
+    transform: translateX(-50%);
+    top: 100%; /* Position below the toggle */
+    margin-top: 5px; /* Small gap */
+    padding: 8px 0;
+}
+
+.dropdown-content a {
+    color: white;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+    cursor: pointer; /* Indicate clickable item */
+}
+
+.dropdown-content a:hover {
+    background-color: #4b5563; /* Highlight on hover */
+}
+
+.dropdown-content.show {
+    display: block; /* Show when active */
+}
