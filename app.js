@@ -9,12 +9,13 @@ const simCahn  = 'cahn-hilliard';
 const simIsing = 'ising';
 const simDLA   = 'dla';
 const simGray  = 'gray';
+const simKob   = 'kobayashi';
 
 /// generic
 let FIELD;
+let FIELD_NEXT;
 
 /// for cahn hillard
-let FIELD_NEXT;
 let FIELD_MU;
 
 /// for gray scott
@@ -58,27 +59,36 @@ function sim_GetSizeY(SizeX) {
 function sim_resizeCanvas() {
     canvas.height = window.innerHeight;
     canvas.width  = window.innerWidth - barWidth;
-
     const maxGridSizeX  = Math.floor(canvas.width / cellDim);
     const maxGridSizeY  = sim_GetSizeY(maxGridSizeX);
     const GridSizeInput = document.getElementById('GridSizeInput');
-    
     GridSizeInput.setAttribute('max', maxGridSizeX);
-
     if (GridSizeX > maxGridSizeX) {
         GridSizeX = maxGridSizeX;
         GridSizeInput.value = GridSizeX;
     }
-
     GridSizeY = Math.min(maxGridSizeY, sim_GetSizeY(GridSizeX));
-
     document.getElementById('GridSizeLabel').innerText = `Size: ${GridSizeX} x ${GridSizeY}`;
     sim_initModelGrid();
     sim_drawGrid();
 }
 
+function fill_circle(FIELD, cx, cy, rad, value)
+{
+    for (let x = 0; x < GridSizeX; x++) {
+        for (let y = 0; y < GridSizeY; y++) {
+            if ( (x-cx)*(x-cx) + (y-cy)*(y-cy) <= rad*rad ) {
+                FIELD[x][y] = value + 0.01 * (Math.random() - 0.5);
+            }
+        }
+    }
+}
+
 function sim_initModelGrid() {
     sim_Stop();
+
+    const cx = Math.floor(GridSizeX / 2);
+    const cy = Math.floor(GridSizeY / 2);
 
     if (simModel === simCahn)
     {
@@ -105,19 +115,19 @@ function sim_initModelGrid() {
         U_NEXT  = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
         V_NEXT  = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
 
-        const cx  = Math.floor(GridSizeX / 2);
-        const cy  = Math.floor(GridSizeY / 2);
         const rad = Math.floor(GridSizeY / 8);
 
-        for (let x = 0; x < GridSizeX; x++) {
-            for (let y = 0; y < GridSizeY; y++) {
-                if ( (x-cx)*(x-cx) + (y-cy)*(y-cy) <= rad*rad ) {
-                    U_FIELD[x][y] = 0.5;
-                    V_FIELD[x][y] = 0.25;
-                }
-            }
-        }
+        fill_circle(U_FIELD, cx, cy, rad, 0.5);
+        fill_circle(V_FIELD, cx, cy, rad, 0.25);
     }
+    // else if (simModel === simKob)
+    // {
+    //     FIELD       = Array.from({ length: GridSizeX }, () => Array.from({ length: GridSizeY }, () => -1.0));
+    //     FIELD_NEXT  = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
+    //     // V_FIELD     = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
+    //     fill_circle(FIELD, cx, cy, 10, 1);
+    //     // fill_circle(V_FIELD, cx, cy, 10, kob_T0);
+    // }
 }
 
 function sim_drawGrid() {
@@ -137,7 +147,8 @@ function sim_drawGrid() {
         for (let y = 0; y < GridSizeY; y++) {
             if (simModel === simCahn || simModel === simDLA) {
                 val = FIELD[x][y];
-            } else if (simModel === simIsing) {
+            } 
+            else if (simModel === simIsing || simModel === simKob) {
                 val = (FIELD[x][y] + 1) / 2;
             }
             else if (simModel === simGray) {
@@ -179,9 +190,7 @@ function sim_cahnHilliardStep() {
         }
     }
 
-    const tmp = FIELD;
-    FIELD = FIELD_NEXT;
-    FIELD_NEXT = tmp;
+    [FIELD, FIELD_NEXT] = [FIELD_NEXT, FIELD];
 }
 
 function sim_isingStep() {
@@ -249,17 +258,8 @@ function sim_grayScottStep() {
         }
     }
 
-    {
-        const tmp = U_FIELD;
-        U_FIELD = U_NEXT;
-        U_NEXT = tmp;
-    }
-
-    {
-        const tmp = V_FIELD;
-        V_FIELD = V_NEXT;
-        V_NEXT = tmp;
-    }
+    [U_FIELD, U_NEXT] = [U_NEXT, U_FIELD];
+    [V_FIELD, V_NEXT] = [V_NEXT, V_FIELD];
 }
 
 
