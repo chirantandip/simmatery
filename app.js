@@ -1,4 +1,5 @@
 let simCTX  = document.getElementById('canvas').getContext('2d');
+let canvas  = simCTX.canvas;
 
 let simModel;
 let simRequest;
@@ -7,12 +8,22 @@ let simRunning = false;
 const simCahn  = 'cahn-hilliard';
 const simIsing = 'ising';
 const simDLA   = 'dla';
+const simGray  = 'gray';
 
+/// generic
 let FIELD;
+
+/// for cahn hillard
 let FIELD_NEXT;
 let FIELD_MU;
 
-let GridSize = 128;
+/// for gray scott
+let U_FIELD, U_NEXT;
+let V_FIELD, V_NEXT;
+
+// let GridSize = 128;
+let GridSizeX = 128; // Width of the grid
+let GridSizeY = 128; // Height of the grid
 
 let cahn_dx = 1.0;
 let cahn_dt = 0.25;  
@@ -26,67 +37,112 @@ let ising_J = 1.2;  /// Coupling constant
 let ising_N = 1;    /// neighborhood
 
 let dla_P   = 0.5;  /// Sticking probability
-let dla_N   = 10;    /// Number of particles
+let dla_N   = 10;   /// Number of particles
 let dla_D   = 5;    /// Launch distance from rightmost occupied cell
 
 let dla_Rightmost = 0;
 
+let gs_Du   = 0.2;
+let gs_Dv   = 0.1;
+let gs_F    = 0.04;
+let gs_k    = 0.06;
+
+const barWidth = 400;
+const cellDim  = 3;
 const cartDirections = [ [0, 1], [0, -1], [1, 0], [-1, 0] ];
 
+function sim_GetSizeY(SizeX) {
+    return Math.floor(canvas.height / (canvas.width / SizeX) + 1);
+}
+
 function sim_resizeCanvas() {
-    const canvas  = document.getElementById('canvas');
     canvas.height = window.innerHeight;
-    canvas.width  = window.innerWidth - 400;
+    canvas.width  = window.innerWidth - barWidth;
 
-    const maxGridSize   = Math.floor(Math.min(canvas.width, canvas.height) / 3); 
+    const maxGridSizeX  = Math.floor(canvas.width / cellDim);
+    const maxGridSizeY  = sim_GetSizeY(maxGridSizeX);
     const GridSizeInput = document.getElementById('GridSizeInput');
-
-    GridSizeInput.setAttribute('max', maxGridSize);
-
-    if (GridSize > maxGridSize) {
-        GridSize = maxGridSize;
-        GridSizeInput.value = GridSize;
-    }
     
-    document.getElementById('GridSizeLabel').innerText = `Size: ${GridSize} x ${GridSize}`;
+    GridSizeInput.setAttribute('max', maxGridSizeX);
+
+    if (GridSizeX > maxGridSizeX) {
+        GridSizeX = maxGridSizeX;
+        GridSizeInput.value = GridSizeX;
+    }
+
+    GridSizeY = Math.min(maxGridSizeY, sim_GetSizeY(GridSizeX));
+
+    document.getElementById('GridSizeLabel').innerText = `Size: ${GridSizeX} x ${GridSizeY}`;
     sim_initModelGrid();
     sim_drawGrid();
 }
 
 function sim_initModelGrid() {
     sim_Stop();
-    if (simModel === simCahn) {
-        FIELD       = Array.from({ length: GridSize }, () => Array.from({ length: GridSize }, () => 0.5 + (Math.random() - 0.5) * 0.4));
-        FIELD_NEXT  = Array.from({ length: GridSize }, () => Array(GridSize).fill(0));
-        FIELD_MU    = Array.from({ length: GridSize }, () => Array(GridSize).fill(0));
-    } else if (simModel === simIsing) {
-        FIELD       = Array.from({ length: GridSize }, () => Array.from({ length: GridSize }, () => (Math.random() < 0.5 ? 1 : -1)));
+
+    if (simModel === simCahn)
+    {
+        FIELD       = Array.from({ length: GridSizeX }, () => Array.from({ length: GridSizeY }, () => 0.5 + (Math.random() - 0.5) * 0.4));
+        FIELD_NEXT  = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
+        FIELD_MU    = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
+    } 
+    else if (simModel === simIsing)
+    {
+        FIELD = Array.from({ length: GridSizeX }, () => Array.from({ length: GridSizeY }, () => (Math.random() < 0.5 ? 1 : -1)));
     }
-    else if (simModel === simDLA) {
-        FIELD       = Array.from({ length: GridSize }, () => Array(GridSize).fill(0));
-        for (let y = 0; y < GridSize; y++) {
+    else if (simModel === simDLA)
+    {
+        FIELD = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
+        for (let y = 0; y < GridSizeY; y++) {
             FIELD[0][y] = 1;
         }
         dla_Rightmost = 1;
     }
+    else if (simModel === simGray)
+    {        
+        U_FIELD = Array.from({ length: GridSizeX }, () => Array.from({ length: GridSizeY }, () => 1.0));
+        V_FIELD = Array.from({ length: GridSizeX }, () => Array.from({ length: GridSizeY }, () => 0.0));
+        U_NEXT  = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
+        V_NEXT  = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
+
+        const cx  = Math.floor(GridSizeX / 2);
+        const cy  = Math.floor(GridSizeY / 2);
+        const rad = Math.floor(GridSizeY / 8);
+
+        for (let x = 0; x < GridSizeX; x++) {
+            for (let y = 0; y < GridSizeY; y++) {
+                if ( (x-cx)*(x-cx) + (y-cy)*(y-cy) <= rad*rad ) {
+                    U_FIELD[x][y] = 0.5;
+                    V_FIELD[x][y] = 0.25;
+                }
+            }
+        }
+    }
 }
 
 function sim_drawGrid() {
-    simCTX.clearRect(0, 0, simCTX.canvas.width, simCTX.canvas.height);
+    simCTX.clearRect(0, 0, canvas.width, canvas.height);
 
-    const cellSize = simCTX.canvas.width / GridSize;
+    const cellSizeX = canvas.width  / GridSizeX;
+    const cellSizeY = canvas.height / GridSizeY;
+
+    // Ensure square cells by using the smaller cell size
+    const cellSize = Math.min(cellSizeX, cellSizeY);
 
     const rgbA = [13, 94, 166];
-    const rgbB = [234,166, 77];
+    const rgbB = [234, 166, 77];
     let val;
 
-    for (let x = 0; x < GridSize; x++) {
-        for (let y = 0; y < GridSize; y++) {
-
+    for (let x = 0; x < GridSizeX; x++) {
+        for (let y = 0; y < GridSizeY; y++) {
             if (simModel === simCahn || simModel === simDLA) {
                 val = FIELD[x][y];
             } else if (simModel === simIsing) {
-                val = (FIELD[x][y] + 1) / 2; 
+                val = (FIELD[x][y] + 1) / 2;
+            }
+            else if (simModel === simGray) {
+                val = V_FIELD[x][y] ;// - 0.5 * U_FIELD[x][y]; // Interpolate: emphasize V, penalize U
+                val = Math.max(0, Math.min(1, val)); 
             }
 
             const red   = Math.floor(rgbA[0] + (rgbB[0] - rgbA[0]) * val);
@@ -100,12 +156,7 @@ function sim_drawGrid() {
 }
 
 function atGrid(grid, x, y) {
-    return grid[(x + GridSize) % GridSize][(y + GridSize) % GridSize];
-}
-
-function atGrid_Y(grid, x, y) {
-    if (x < 0 || x >= GridSize) return 0;
-    return grid[x][(y + GridSize) % GridSize];
+    return grid[(x + GridSizeX) % GridSizeX][(y + GridSizeY) % GridSizeY];
 }
 
 function lapGrid(field, x, y) {
@@ -114,15 +165,15 @@ function lapGrid(field, x, y) {
 }
 
 function sim_cahnHilliardStep() {
-    for (let x = 0; x < GridSize; x++) {
-        for (let y = 0; y < GridSize; y++) {
+    for (let x = 0; x < GridSizeX; x++) {
+        for (let y = 0; y < GridSizeY; y++) {
             const phi       = atGrid(FIELD, x, y);
             const dwdphi    = 2 * cahn_W * phi * (1 - phi) * (1 - 2 * phi);
             FIELD_MU[x][y]  = dwdphi - cahn_K * lapGrid(FIELD, x, y);
         }
     }
-    for (let x = 0; x < GridSize; x++) {
-        for (let y = 0; y < GridSize; y++) {
+    for (let x = 0; x < GridSizeX; x++) {
+        for (let y = 0; y < GridSizeY; y++) {
             FIELD_NEXT[x][y] = atGrid(FIELD, x, y) + cahn_dt * cahn_M * lapGrid(FIELD_MU, x, y);
             FIELD_NEXT[x][y] = Math.max(0, Math.min(1, FIELD_NEXT[x][y]));
         }
@@ -134,9 +185,9 @@ function sim_cahnHilliardStep() {
 }
 
 function sim_isingStep() {
-    for (let i = 0; i < GridSize * GridSize; i++) {
-        const x = Math.floor(Math.random() * GridSize);
-        const y = Math.floor(Math.random() * GridSize);
+    for (let i = 0; i < GridSizeX * GridSizeY; i++) {
+        const x = Math.floor(Math.random() * GridSizeX);
+        const y = Math.floor(Math.random() * GridSizeY);
 
         const spin = atGrid(FIELD, x, y);
         let sum = 0;
@@ -175,6 +226,48 @@ function sim_isingStep() {
     }
 }
 
+function sim_grayScottStep() {
+    
+    let U_NEXT = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
+    let V_NEXT = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
+
+    for (let x = 0; x < GridSizeX; x++) {
+        for (let y = 0; y < GridSizeY; y++) {
+
+            const u = atGrid(U_FIELD, x, y);
+            const v = atGrid(V_FIELD, x, y);
+
+            const uv2 = u * v * v;
+
+            const lapU = lapGrid(U_FIELD, x, y);
+            const lapV = lapGrid(V_FIELD, x, y);
+
+            U_NEXT[x][y] = u + cahn_dt * (gs_Du * lapU - uv2 + gs_F * (1 - u));
+            V_NEXT[x][y] = v + cahn_dt * (gs_Dv * lapV + uv2 - (gs_F + gs_k) * v);
+            U_NEXT[x][y] = Math.max(0, Math.min(1, U_NEXT[x][y]));
+            V_NEXT[x][y] = Math.max(0, Math.min(1, V_NEXT[x][y]));
+        }
+    }
+
+    {
+        const tmp = U_FIELD;
+        U_FIELD = U_NEXT;
+        U_NEXT = tmp;
+    }
+
+    {
+        const tmp = V_FIELD;
+        V_FIELD = V_NEXT;
+        V_NEXT = tmp;
+    }
+}
+
+
+function atGrid_Y(grid, x, y) {
+    if (x < 0 || x >= GridSizeX) return 0;
+    return grid[x][(y + GridSizeY) % GridSizeY];
+}
+
 function isNearCluster(x, y) {
     for (let dx = -1; dx <= 1; dx++) {
         for (let dy = -1; dy <= 1; dy++) {
@@ -191,15 +284,15 @@ function sim_dlaStep() {
     for (let p = 0; p < dla_N; p++) {
         
         let px = dla_Rightmost + dla_D;
-        let py = Math.floor(Math.random() * GridSize);
+        let py = Math.floor(Math.random() * GridSizeY);
 
-        if (px >= GridSize) {
+        if (px >= GridSizeX) {
             continue;
         }
         let steps = 0;
         while (steps < 10000) {
             if (isNearCluster(px, py) && Math.random() < dla_P) {
-                if (px >= 0 && px < GridSize) {
+                if (px >= 0 && px < GridSizeX) {
                     FIELD[px][py] = 1;
                     if (px > dla_Rightmost) {
                         dla_Rightmost = px;
@@ -210,9 +303,9 @@ function sim_dlaStep() {
 
             const [dx, dy] = cartDirections[Math.floor(Math.random() * 4)];
             const newX = px + dx;
-            const newY = (py + dy + GridSize) % GridSize; 
+            const newY = (py + dy + GridSizeY) % GridSizeY; 
 
-            if (newX < 0 || newX >= GridSize) {
+            if (newX < 0 || newX >= GridSizeX) {
                 break;
             }
 
@@ -232,6 +325,10 @@ function sim_Run() {
     }
     else if (simModel === simDLA) {
         sim_dlaStep();
+    }
+    else if (simModel === simGray)
+    {
+        sim_grayScottStep();
     }
 
     sim_drawGrid();
@@ -272,12 +369,17 @@ function sim_Reset() {
 
 function sim_UpdateGridSize(event) {
     sim_Stop();
-    GridSize = parseInt(event.target.value);
-    document.getElementById('GridSizeLabel').innerText = `Size: ${GridSize} x ${GridSize}`;
+    
+    GridSizeX = parseInt(event.target.value);
+    GridSizeY = sim_GetSizeY(GridSizeX);
+    
+    document.getElementById('GridSizeLabel').innerText = `Size: ${GridSizeX} x ${GridSizeY}`;
+    
     sim_initModelGrid();
     sim_drawGrid();
+
     document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled  = true;
+    document.getElementById('stopBtn').disabled = true;
     document.getElementById('resetBtn').disabled = false;
 }
 
@@ -443,11 +545,48 @@ function sim_SetInputParmeters() {
             onChange: (val) => { dla_D = val; }
         });
     }
+    else if (simModel === simGray) {
+        sim_createSliderControl(paramDiv, { 
+            id: 'Du', 
+            labelPrefix: 'Diffusion U (D_u)', 
+            min: 0.05, max: 0.5, step: 0.01, 
+            value: gs_Du, 
+            toFixed: 2, 
+            onChange: (val) => { gs_Du = val; } });
+
+        sim_createSliderControl(paramDiv, {
+            id: 'Dv', 
+            labelPrefix: 'Diffusion V (D_v)', 
+            min: 0.01, 
+            max: 0.25, 
+            step: 0.01, 
+            value: gs_Dv, 
+            toFixed: 2, 
+            onChange: (val) => { gs_Dv = val; } });
+
+        sim_createSliderControl(paramDiv, { 
+            id: 'F', 
+            labelPrefix: 'Feed Rate (F)', 
+            min: 0.01, 
+            max: 0.1, 
+            step: 0.001, 
+            value: gs_F, 
+            toFixed: 3, 
+            onChange: (val) => { gs_F = val; } });
+
+        sim_createSliderControl(paramDiv, { 
+            id: 'k', 
+            labelPrefix: 'Kill Rate (k)', 
+            min: 0.01, 
+            max: 0.1, 
+            step: 0.001, 
+            value: gs_k, 
+            toFixed: 3, 
+            onChange: (val) => { gs_k = val; } });
+    }
 }
 
-
 window.onload = () => {
-
     const menuToggle      = document.getElementById('menuToggle');
     const dropdownContent = document.getElementById('dropdownContent');
 
