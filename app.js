@@ -373,7 +373,7 @@ function sim_UpdateGridSize(event) {
     GridSizeX = parseInt(event.target.value);
     GridSizeY = sim_GetSizeY(GridSizeX);
     
-    document.getElementById('GridSizeLabel').innerText = `Size: ${GridSizeX} x ${GridSizeY}`;
+    document.getElementById('GridSizeLabel').innerText = `Grid Size: ${GridSizeX} x ${GridSizeY}`;
     
     sim_initModelGrid();
     sim_drawGrid();
