@@ -120,7 +120,7 @@ function sim_initModelGrid() {
         U_NEXT  = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
         V_NEXT  = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
 
-        const rad = Math.floor(GridSizeY / 8);
+        const rad = Math.floor(81 / 8);
 
         fill_circle(U_FIELD, cx, cy, rad, 0.5);
         fill_circle(V_FIELD, cx, cy, rad, 0.25);
