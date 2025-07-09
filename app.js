@@ -28,6 +28,7 @@ let GridSizeY = 128; // Height of the grid
 
 let cahn_dx = 1.0;
 let cahn_dt = 0.25;  
+
 let cahn_M  = 0.25; /// Mobility
 let cahn_K  = 0.25; /// Kappa
 let cahn_W  = 0.99; /// Double well energy
@@ -43,9 +44,9 @@ let dla_D   = 5;    /// Launch distance from rightmost occupied cell
 
 let dla_Rightmost = 0;
 
-let gs_Du   = 0.2;
-let gs_Dv   = 0.1;
-let gs_F    = 0.04;
+let gs_Du   = 0.16;
+let gs_Dv   = 0.08;
+let gs_F    = 0.025;
 let gs_k    = 0.06;
 
 const barWidth = 400;
@@ -110,8 +111,12 @@ function sim_initModelGrid() {
     }
     else if (simModel === simGray)
     {        
+        cahn_dt = 1.0;
+        cahn_dx = 1.0;
+
         U_FIELD = Array.from({ length: GridSizeX }, () => Array.from({ length: GridSizeY }, () => 1.0));
         V_FIELD = Array.from({ length: GridSizeX }, () => Array.from({ length: GridSizeY }, () => 0.0));
+
         U_NEXT  = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
         V_NEXT  = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
 
@@ -152,7 +157,7 @@ function sim_drawGrid() {
                 val = (FIELD[x][y] + 1) / 2;
             }
             else if (simModel === simGray) {
-                val = V_FIELD[x][y] ;// - 0.5 * U_FIELD[x][y]; // Interpolate: emphasize V, penalize U
+                val = V_FIELD[x][y] / 0.25;// - 0.5 * U_FIELD[x][y]; // Interpolate: emphasize V, penalize U
                 val = Math.max(0, Math.min(1, val)); 
             }
 
@@ -237,8 +242,8 @@ function sim_isingStep() {
 
 function sim_grayScottStep() {
     
-    let U_NEXT = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
-    let V_NEXT = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
+    // let U_NEXT = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
+    // let V_NEXT = Array.from({ length: GridSizeX }, () => Array(GridSizeY).fill(0));
 
     for (let x = 0; x < GridSizeX; x++) {
         for (let y = 0; y < GridSizeY; y++) {
@@ -253,6 +258,7 @@ function sim_grayScottStep() {
 
             U_NEXT[x][y] = u + cahn_dt * (gs_Du * lapU - uv2 + gs_F * (1 - u));
             V_NEXT[x][y] = v + cahn_dt * (gs_Dv * lapV + uv2 - (gs_F + gs_k) * v);
+
             U_NEXT[x][y] = Math.max(0, Math.min(1, U_NEXT[x][y]));
             V_NEXT[x][y] = Math.max(0, Math.min(1, V_NEXT[x][y]));
         }
@@ -549,7 +555,9 @@ function sim_SetInputParmeters() {
         sim_createSliderControl(paramDiv, { 
             id: 'Du', 
             labelPrefix: 'Diffusion U (D_u)', 
-            min: 0.05, max: 0.5, step: 0.01, 
+            min: 0.01, 
+            max: 0.5, 
+            step: 0.02, 
             value: gs_Du, 
             toFixed: 2, 
             onChange: (val) => { gs_Du = val; } });
@@ -558,8 +566,8 @@ function sim_SetInputParmeters() {
             id: 'Dv', 
             labelPrefix: 'Diffusion V (D_v)', 
             min: 0.01, 
-            max: 0.25, 
-            step: 0.01, 
+            max: 0.5, 
+            step: 0.02,
             value: gs_Dv, 
             toFixed: 2, 
             onChange: (val) => { gs_Dv = val; } });
@@ -569,7 +577,7 @@ function sim_SetInputParmeters() {
             labelPrefix: 'Feed Rate (F)', 
             min: 0.01, 
             max: 0.1, 
-            step: 0.001, 
+            step: 0.002, 
             value: gs_F, 
             toFixed: 3, 
             onChange: (val) => { gs_F = val; } });
@@ -579,7 +587,7 @@ function sim_SetInputParmeters() {
             labelPrefix: 'Kill Rate (k)', 
             min: 0.01, 
             max: 0.1, 
-            step: 0.001, 
+            step: 0.002, 
             value: gs_k, 
             toFixed: 3, 
             onChange: (val) => { gs_k = val; } });
