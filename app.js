@@ -175,10 +175,21 @@ function atGrid(grid, x, y) {
     return grid[(x + GridSizeX) % GridSizeX][(y + GridSizeY) % GridSizeY];
 }
 
+// function lapGrid(field, x, y) {
+//     return (atGrid(field, x + 1, y) + atGrid(field, x - 1, y) +
+//             atGrid(field, x, y + 1) + atGrid(field, x, y - 1) - 4 * atGrid(field, x, y)) / (cahn_dx * cahn_dx);
+// }
+
 function lapGrid(field, x, y) {
-    return (atGrid(field, x + 1, y) + atGrid(field, x - 1, y) +
-            atGrid(field, x, y + 1) + atGrid(field, x, y - 1) - 4 * atGrid(field, x, y)) / (cahn_dx * cahn_dx);
+
+    const points4   = atGrid(field, x + 1, y    ) + atGrid(field, x - 1, y    )
+                    + atGrid(field, x    , y + 1) + atGrid(field, x    , y - 1);
+    const corner4   = atGrid(field, x + 1, y + 1) + atGrid(field, x + 1, y - 1)
+                    + atGrid(field, x - 1, y + 1) + atGrid(field, x - 1, y - 1);
+
+    return (4 * points4 + corner4 - 20 * atGrid(field, x, y)) / (6 * cahn_dx * cahn_dx);
 }
+
 
 function sim_cahnHilliardStep() {
     for (let x = 0; x < GridSizeX; x++) {
