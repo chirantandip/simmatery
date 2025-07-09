@@ -248,19 +248,28 @@ function sim_grayScottStep() {
     for (let x = 0; x < GridSizeX; x++) {
         for (let y = 0; y < GridSizeY; y++) {
 
-            const u = atGrid(U_FIELD, x, y);
-            const v = atGrid(V_FIELD, x, y);
-
-            const uv2 = u * v * v;
-
-            const lapU = lapGrid(U_FIELD, x, y);
             const lapV = lapGrid(V_FIELD, x, y);
 
-            U_NEXT[x][y] = u + cahn_dt * (gs_Du * lapU - uv2 + gs_F * (1 - u));
-            V_NEXT[x][y] = v + cahn_dt * (gs_Dv * lapV + uv2 - (gs_F + gs_k) * v);
+            if (Math.abs(lapV) > 1e-12)
+            {
+                const lapU = lapGrid(U_FIELD, x, y);
 
-            U_NEXT[x][y] = Math.max(0, Math.min(1, U_NEXT[x][y]));
-            V_NEXT[x][y] = Math.max(0, Math.min(1, V_NEXT[x][y]));
+                const u = atGrid(U_FIELD, x, y);
+                const v = atGrid(V_FIELD, x, y);
+    
+                const uv2 = u * v * v;
+    
+                U_NEXT[x][y] = u + cahn_dt * (gs_Du * lapU - uv2 + gs_F * (1 - u));
+                V_NEXT[x][y] = v + cahn_dt * (gs_Dv * lapV + uv2 - (gs_F + gs_k) * v);
+    
+                U_NEXT[x][y] = Math.max(0, Math.min(1, U_NEXT[x][y]));
+                V_NEXT[x][y] = Math.max(0, Math.min(1, V_NEXT[x][y]));
+            }
+            else
+            {
+                U_NEXT[x][y] = U_FIELD[x][y] ; // Math.max(0, Math.min(1, U_NEXT[x][y]));
+                V_NEXT[x][y] = V_FIELD[x][y] ; // Math.max(0, Math.min(1, V_NEXT[x][y]));
+            }
         }
     }
 
