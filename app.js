@@ -555,27 +555,27 @@ function sim_SetInputParmeters() {
         sim_createSliderControl(paramDiv, { 
             id: 'Du', 
             labelPrefix: 'Diffusion U (D_u)', 
-            min: 0.01, 
+            min: 0.005, 
             max: 0.5, 
-            step: 0.02, 
+            step: 0.005, 
             value: gs_Du, 
-            toFixed: 2, 
+            toFixed: 3, 
             onChange: (val) => { gs_Du = val; } });
 
         sim_createSliderControl(paramDiv, {
             id: 'Dv', 
             labelPrefix: 'Diffusion V (D_v)', 
-            min: 0.01, 
+            min: 0.005, 
             max: 0.5, 
-            step: 0.02,
+            step: 0.005,
             value: gs_Dv, 
-            toFixed: 2, 
+            toFixed: 3, 
             onChange: (val) => { gs_Dv = val; } });
 
         sim_createSliderControl(paramDiv, { 
             id: 'F', 
             labelPrefix: 'Feed Rate (F)', 
-            min: 0.01, 
+            min: 0.002, 
             max: 0.1, 
             step: 0.002, 
             value: gs_F, 
@@ -585,7 +585,7 @@ function sim_SetInputParmeters() {
         sim_createSliderControl(paramDiv, { 
             id: 'k', 
             labelPrefix: 'Kill Rate (k)', 
-            min: 0.01, 
+            min: 0.02, 
             max: 0.1, 
             step: 0.002, 
             value: gs_k, 
