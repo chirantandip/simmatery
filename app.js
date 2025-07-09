@@ -552,6 +552,28 @@ function sim_SetInputParmeters() {
         });
     }
     else if (simModel === simGray) {
+        
+        sim_createSliderControl(paramDiv, {
+            id: 'dxLabel',
+            labelPrefix: 'Grid Spacing (Δx)',
+            min: 0.1,
+            max: 5,
+            step: 0.01,
+            value: cahn_dx,
+            toFixed: 2,
+            onChange: (val) => { cahn_dx = val; }
+        });
+        sim_createSliderControl(paramDiv, {
+            id: 'dt',
+            labelPrefix: 'Time sim_Run (Δt)',
+            min: 0.01,
+            max: 1,
+            step: 0.01,
+            value: cahn_dt,
+            toFixed: 4,
+            onChange: (val) => { cahn_dt = val; }
+        });
+
         sim_createSliderControl(paramDiv, { 
             id: 'Du', 
             labelPrefix: 'Diffusion U (D_u)', 
