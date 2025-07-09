@@ -261,7 +261,7 @@ function sim_grayScottStep() {
 
             const lapV = lapGrid(V_FIELD, x, y);
 
-            if (Math.abs(lapV) > 1e-12)
+            if (Math.abs(lapV) > 1e-6)
             {
                 const lapU = lapGrid(U_FIELD, x, y);
 
