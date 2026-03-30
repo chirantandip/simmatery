@@ -125,11 +125,11 @@ let GridSizeY = 128;
 // ============================================================================
 
 let cahn_dx = 1.0;
-let cahn_dt = 0.25;
+let cahn_dt = 0.3;
 
 let cahn_M  = 0.25; /// Mobility
 let cahn_K  = 0.25; /// Kappa
-let cahn_W  = 0.99; /// Double well energy
+let cahn_W  = 1.00; /// Double well energy
 
 let ising_T = 2.0;  /// Temperature
 let ising_B = 0.0;  /// Magnetic field
@@ -676,7 +676,7 @@ function initGray() {
          // Add a small solid seed at center
          const cx = Math.floor(GridSizeX / 2);
          const cy = Math.floor(GridSizeY / 2);
-         const radius = 3;
+         const radius = 5;
          for (let y = Math.max(0, cy - radius); y < Math.min(GridSizeY, cy + radius); y++) {
              for (let x = Math.max(0, cx - radius); x < Math.min(GridSizeX, cx + radius); x++) {
                  if ((x - cx)*(x - cx) + (y - cy)*(y - cy) <= radius*radius) {
