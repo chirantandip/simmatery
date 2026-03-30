@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SimMatery</title>
+    <title>SimMatery - Materials Simulation</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -15,35 +15,31 @@
 
                 <h2 class="sidebar-header dropdown-toggle" id="menuToggle">Choose Model<span class="dropdown-icon">▼</span></h2>
 
-                <div class="dropdown-content" id="dropdownContent">
-                    <a href="#" class="dropdown-item" data-model="cahn-hilliard">Cahn-Hilliard Model</a>
-                    <a href="#" class="dropdown-item" data-model="ising">Ising Model</a>
-                    <a href="#" class="dropdown-item" data-model="dla">Diffusion Limited Aggregation</a>
-                    <a href="#" class="dropdown-item" data-model="gray">Gray-Scott Model</a>
-                    <!-- <a href="#" class="dropdown-item" data-model="kobayashi">Kobayashi Solidification</a> -->
-                </div>
+                 <div class="dropdown-content" id="dropdownContent">
+                     <a href="#" class="dropdown-item" data-model="cahnhilliard">Cahn-Hilliard Model</a>
+                     <a href="#" class="dropdown-item" data-model="allencahn">Allen-Cahn Model</a>
+                     <a href="#" class="dropdown-item" data-model="ising">Ising Model</a>
+                     <a href="#" class="dropdown-item" data-model="dla">Diffusion Limited Aggregation</a>
+                     <a href="#" class="dropdown-item" data-model="gray">Gray-Scott Model</a>
+                     <a href="#" class="dropdown-item" data-model="kobayashi">Kobayashi Model</a>
+                 </div>
             </div>
 
-            <input type="range" id="GridSizeInput" min="64" max="512" value="128" class="sidebar-input-range">
-            <div id="GridSizeLabel" class="sidebar-label-small">Grid Size: 128 x 128</div>
-
-        </div>
-
-        <div id="parameters-scroll-container" class="sidebar-parameters-scroll">
-            <div id="parameters" class="sidebar-section"></div>
-        </div>
-
-        <div class="sidebar-bottom-fixed">
             <div class="sidebar-section controls">
                 <button id="startBtn" class="sidebar-button green">Start</button>
                 <button id="stopBtn"  class="sidebar-button red">Stop</button>
                 <button id="resetBtn" class="sidebar-button blue">Reset</button>
             </div>
         </div>
+
+        <div id="parameters-scroll-container" class="sidebar-parameters-scroll">
+            <div class="section-title">Simulation Parameters</div>
+            <div id="parameters"></div>
+        </div>
     </div>
 
     <div class="canvas-container">
-        <canvas id="canvas" class="full-canvas"></canvas>
+        <canvas id="canvas"></canvas>
     </div>
 </div>
 <script src="app.js"></script>
