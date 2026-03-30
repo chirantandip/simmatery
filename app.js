@@ -125,11 +125,11 @@ let GridSizeY = 128;
 // ============================================================================
 
 let cahn_dx = 1.0;
-let cahn_dt = 0.3;
+let cahn_dt = 0.25;
 
 let cahn_M  = 0.25; /// Mobility
 let cahn_K  = 0.25; /// Kappa
-let cahn_W  = 1.00; /// Double well energy
+let cahn_W  = 0.99; /// Double well energy
 
 let ising_T = 2.0;  /// Temperature
 let ising_B = 0.0;  /// Magnetic field
@@ -252,7 +252,615 @@ function initColorPalette() {
 // WELCOME SCREEN — DO NOT MODIFY (except: add your model name to the list)
 // ============================================================================
 
+const USE_MAXIMALIST_WELCOME = true;
+
+let welcomeAnimFrame = 0;
+let stars = [];
+let mangoes = [];
+let crystals = [];
+let shootingStars = [];
+let atoms = [];
+let butterflies = [];
+let sparkles = [];
+let comets = [];
+let welcomeRunning = false;
+let welcomeAnimId = null;
+
+function initWelcomeParticles() {
+    stars = [];
+    mangoes = [];
+    crystals = [];
+    shootingStars = [];
+    atoms = [];
+    butterflies = [];
+    sparkles = [];
+    comets = [];
+    
+    for (let i = 0; i < 80; i++) {
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: 1 + Math.random() * 2,
+            color: ['#FFFFFF', '#00FFFF', '#FFFF00', '#FF69B4'][Math.floor(Math.random() * 4)],
+            phase: Math.random() * Math.PI * 2,
+            speed: 0.02 + Math.random() * 0.03
+        });
+    }
+    
+    for (let i = 0; i < 12; i++) {
+        const side = Math.floor(Math.random() * 4);
+        let x, y, speedX, speedY;
+        
+        if (side === 0) { // right
+            x = canvas.width + 50;
+            y = Math.random() * canvas.height;
+            speedX = -(0.3 + Math.random() * 0.5);
+            speedY = (Math.random() - 0.5) * 0.3;
+        } else if (side === 1) { // left
+            x = -50;
+            y = Math.random() * canvas.height;
+            speedX = 0.3 + Math.random() * 0.5;
+            speedY = (Math.random() - 0.5) * 0.3;
+        } else if (side === 2) { // top
+            x = Math.random() * canvas.width;
+            y = -50;
+            speedX = (Math.random() - 0.5) * 0.3;
+            speedY = 0.3 + Math.random() * 0.5;
+        } else { // bottom
+            x = Math.random() * canvas.width;
+            y = canvas.height + 50;
+            speedX = (Math.random() - 0.5) * 0.3;
+            speedY = -(0.3 + Math.random() * 0.5);
+        }
+        
+        mangoes.push({
+            x: x,
+            y: y,
+            size: 18 + Math.random() * 12,
+            speedX: speedX,
+            speedY: speedY,
+            phase: Math.random() * Math.PI * 2,
+            amplitude: 20 + Math.random() * 40
+        });
+    }
+    
+    for (let i = 0; i < 10; i++) {
+        const side = Math.floor(Math.random() * 4);
+        let x, y, speedX, speedY;
+        
+        if (side === 0) { // right
+            x = canvas.width + 50;
+            y = Math.random() * canvas.height;
+            speedX = -(0.3 + Math.random() * 0.4);
+            speedY = (Math.random() - 0.5) * 0.2;
+        } else if (side === 1) { // left
+            x = -50;
+            y = Math.random() * canvas.height;
+            speedX = 0.3 + Math.random() * 0.4;
+            speedY = (Math.random() - 0.5) * 0.2;
+        } else if (side === 2) { // top
+            x = Math.random() * canvas.width;
+            y = -50;
+            speedX = (Math.random() - 0.5) * 0.2;
+            speedY = 0.4 + Math.random() * 0.4;
+        } else { // bottom
+            x = Math.random() * canvas.width;
+            y = canvas.height + 50;
+            speedX = (Math.random() - 0.5) * 0.2;
+            speedY = -(0.4 + Math.random() * 0.4);
+        }
+        
+        crystals.push({
+            x: x,
+            y: y,
+            size: 14 + Math.random() * 10,
+            rotation: Math.random() * Math.PI * 2,
+            speedX: speedX,
+            speedY: speedY,
+            rotationSpeed: 0.01 + Math.random() * 0.02,
+            color: ['#00FFFF', '#FF00FF', '#FFD700', '#39FF14'][Math.floor(Math.random() * 4)]
+        });
+    }
+    
+    for (let i = 0; i < 4; i++) {
+        shootingStars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height * 0.6,
+            length: 30 + Math.random() * 40,
+            speed: 4 + Math.random() * 3,
+            angle: Math.PI / 4 + (Math.random() - 0.5) * 0.3,
+            active: Math.random() > 0.7,
+            cooldown: Math.random() * 200
+        });
+    }
+    
+    for (let i = 0; i < 20; i++) {
+        atoms.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: 10 + Math.random() * 8,
+            rotation: Math.random() * Math.PI * 2,
+            rotationSpeed: 0.02 + Math.random() * 0.03,
+            orbitRadius: 12 + Math.random() * 8,
+            orbitTilt: Math.random() * Math.PI,
+            color: ['#00FFFF', '#FF00FF', '#FFD700', '#39FF14'][Math.floor(Math.random() * 4)]
+        });
+    }
+    
+    for (let i = 0; i < 4; i++) {
+        butterflies.push({
+            x: Math.random() > 0.5 ? -30 : canvas.width + 30,
+            y: Math.random() * canvas.height,
+            size: 12 + Math.random() * 8,
+            speedX: (Math.random() > 0.5 ? 1 : -1) * (0.3 + Math.random() * 0.4),
+            phase: Math.random() * Math.PI * 2,
+            flutterSpeed: 0.15 + Math.random() * 0.1,
+            color: ['#FF1493', '#FF6600', '#FFD700', '#FF69B4'][Math.floor(Math.random() * 4)]
+        });
+    }
+    
+    for (let i = 0; i < 6; i++) {
+        sparkles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: 4 + Math.random() * 6,
+            life: 0,
+            maxLife: 30 + Math.random() * 40,
+            delay: Math.random() * 150,
+            color: ['#FFFFFF', '#FFFF00', '#00FFFF', '#FF69B4'][Math.floor(Math.random() * 4)]
+        });
+    }
+    
+    for (let i = 0; i < 12; i++) {
+        comets.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height * 0.5,
+            size: 6 + Math.random() * 4,
+            speed: 1.5 + Math.random() * 1,
+            angle: Math.PI / 4 + (Math.random() - 0.5) * 0.5,
+            trailLength: 60 + Math.random() * 40,
+            active: Math.random() > 0.6,
+            cooldown: Math.random() * 300,
+            color: ['#00FFFF', '#FF00FF', '#FFD700', '#FF69B4', '#39FF14'][Math.floor(Math.random() * 5)]
+        });
+    }
+}
+
+function drawStar(s) {
+    const twinkle = 0.4 + 0.6 * Math.abs(Math.sin(welcomeAnimFrame * s.speed + s.phase));
+    simCTX.save();
+    simCTX.globalAlpha = twinkle;
+    simCTX.fillStyle = s.color;
+    simCTX.beginPath();
+    simCTX.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    simCTX.fill();
+    simCTX.restore();
+}
+
+function drawMango(m) {
+    simCTX.save();
+    simCTX.translate(m.x, m.y);
+    
+    const gradient = simCTX.createLinearGradient(-m.size/2, 0, m.size/2, 0);
+    gradient.addColorStop(0, '#FFD700');
+    gradient.addColorStop(0.5, '#FF8C00');
+    gradient.addColorStop(1, '#FFD700');
+    simCTX.fillStyle = gradient;
+    
+    simCTX.beginPath();
+    simCTX.ellipse(0, 0, m.size * 0.6, m.size, 0, 0, Math.PI * 2);
+    simCTX.fill();
+    
+    simCTX.fillStyle = '#228B22';
+    simCTX.beginPath();
+    simCTX.moveTo(0, -m.size);
+    simCTX.lineTo(-3, -m.size - 8);
+    simCTX.lineTo(3, -m.size - 8);
+    simCTX.closePath();
+    simCTX.fill();
+    
+    simCTX.restore();
+}
+
+function drawCrystal(c) {
+    simCTX.save();
+    simCTX.translate(c.x, c.y);
+    simCTX.rotate(c.rotation);
+    
+    simCTX.strokeStyle = c.color;
+    simCTX.lineWidth = 2;
+    simCTX.shadowColor = c.color;
+    simCTX.shadowBlur = 10;
+    
+    const s = c.size;
+    simCTX.beginPath();
+    simCTX.moveTo(0, -s);
+    simCTX.lineTo(s * 0.5, 0);
+    simCTX.lineTo(0, s);
+    simCTX.lineTo(-s * 0.5, 0);
+    simCTX.closePath();
+    simCTX.stroke();
+    
+    simCTX.fillStyle = c.color + '44';
+    simCTX.fill();
+    
+    simCTX.restore();
+}
+
+function drawShootingStar(s) {
+    if (!s.active) return;
+    
+    const endX = s.x - Math.cos(s.angle) * s.length;
+    const endY = s.y - Math.sin(s.angle) * s.length;
+    
+    const gradient = simCTX.createLinearGradient(s.x, s.y, endX, endY);
+    gradient.addColorStop(0, '#FFFFFF');
+    gradient.addColorStop(0.3, '#FFFF00');
+    gradient.addColorStop(1, 'transparent');
+    
+    simCTX.save();
+    simCTX.strokeStyle = gradient;
+    simCTX.lineWidth = 2;
+    simCTX.lineCap = 'round';
+    simCTX.shadowColor = '#FFFF00';
+    simCTX.shadowBlur = 10;
+    
+    simCTX.beginPath();
+    simCTX.moveTo(s.x, s.y);
+    simCTX.lineTo(endX, endY);
+    simCTX.stroke();
+    
+    simCTX.fillStyle = '#FFFFFF';
+    simCTX.beginPath();
+    simCTX.arc(s.x, s.y, 2, 0, Math.PI * 2);
+    simCTX.fill();
+    
+    simCTX.restore();
+}
+
+function drawAtom(a) {
+    simCTX.save();
+    simCTX.translate(a.x, a.y);
+    
+    simCTX.fillStyle = a.color;
+    simCTX.shadowColor = a.color;
+    simCTX.shadowBlur = 8;
+    simCTX.beginPath();
+    simCTX.arc(0, 0, a.size * 0.4, 0, Math.PI * 2);
+    simCTX.fill();
+    
+    const orbitX = Math.cos(a.rotation) * a.orbitRadius;
+    const orbitY = Math.sin(a.rotation) * a.orbitRadius * 0.5;
+    
+    simCTX.strokeStyle = a.color + '88';
+    simCTX.lineWidth = 1.5;
+    simCTX.beginPath();
+    simCTX.ellipse(0, 0, a.orbitRadius, a.orbitRadius * 0.5, a.orbitTilt, 0, Math.PI * 2);
+    simCTX.stroke();
+    
+    simCTX.fillStyle = '#FFFFFF';
+    simCTX.beginPath();
+    simCTX.arc(orbitX, orbitY, 3, 0, Math.PI * 2);
+    simCTX.fill();
+    
+    const orbit2X = Math.cos(a.rotation + Math.PI) * a.orbitRadius;
+    const orbit2Y = Math.sin(a.rotation + Math.PI) * a.orbitRadius * 0.5;
+    
+    simCTX.beginPath();
+    simCTX.arc(orbit2X, orbit2Y, 3, 0, Math.PI * 2);
+    simCTX.fill();
+    
+    simCTX.restore();
+}
+
+function drawButterfly(b) {
+    simCTX.save();
+    simCTX.translate(b.x, b.y);
+    
+    const flutter = Math.sin(welcomeAnimFrame * b.flutterSpeed * 10 + b.phase) * 0.4;
+    simCTX.rotate(flutter);
+    
+    simCTX.fillStyle = b.color;
+    simCTX.shadowColor = b.color;
+    simCTX.shadowBlur = 8;
+    
+    simCTX.beginPath();
+    simCTX.ellipse(-b.size * 0.4, 0, b.size * 0.5, b.size * 0.3, 0, 0, Math.PI * 2);
+    simCTX.fill();
+    simCTX.beginPath();
+    simCTX.ellipse(b.size * 0.4, 0, b.size * 0.5, b.size * 0.3, 0, 0, Math.PI * 2);
+    simCTX.fill();
+    
+    simCTX.strokeStyle = '#000000';
+    simCTX.lineWidth = 1;
+    simCTX.beginPath();
+    simCTX.moveTo(0, -b.size * 0.4);
+    simCTX.lineTo(0, b.size * 0.4);
+    simCTX.stroke();
+    
+    simCTX.restore();
+}
+
+function drawSparkle(s) {
+    if (s.delay > 0) return;
+    
+    const lifeRatio = s.life / s.maxLife;
+    if (lifeRatio > 1) return;
+    
+    const alpha = lifeRatio < 0.2 ? lifeRatio * 5 : (1 - lifeRatio);
+    const size = s.size * (lifeRatio < 0.2 ? lifeRatio * 5 : (1 - lifeRatio * 0.5));
+    
+    simCTX.save();
+    simCTX.globalAlpha = alpha;
+    simCTX.fillStyle = s.color;
+    simCTX.shadowColor = s.color;
+    simCTX.shadowBlur = 10;
+    
+    const half = size / 2;
+    simCTX.beginPath();
+    simCTX.moveTo(0, -size);
+    simCTX.lineTo(half * 0.3, -half * 0.3);
+    simCTX.lineTo(size, 0);
+    simCTX.lineTo(half * 0.3, half * 0.3);
+    simCTX.lineTo(0, size);
+    simCTX.lineTo(-half * 0.3, half * 0.3);
+    simCTX.lineTo(-size, 0);
+    simCTX.lineTo(-half * 0.3, -half * 0.3);
+    simCTX.closePath();
+    simCTX.fill();
+    
+    simCTX.restore();
+}
+
+function drawComet(c) {
+    if (!c.active) return;
+    
+    const trailGradient = simCTX.createLinearGradient(
+        c.x, c.y,
+        c.x - Math.cos(c.angle) * c.trailLength,
+        c.y - Math.sin(c.angle) * c.trailLength
+    );
+    trailGradient.addColorStop(0, '#FFFFFF');
+    trailGradient.addColorStop(0.2, c.color || '#00FFFF');
+    trailGradient.addColorStop(1, 'transparent');
+    
+    simCTX.save();
+    simCTX.strokeStyle = trailGradient;
+    simCTX.lineWidth = c.size;
+    simCTX.lineCap = 'round';
+    simCTX.shadowColor = '#FFFFFF';
+    simCTX.shadowBlur = 15;
+    
+    simCTX.beginPath();
+    simCTX.moveTo(c.x, c.y);
+    simCTX.lineTo(
+        c.x - Math.cos(c.angle) * c.trailLength,
+        c.y - Math.sin(c.angle) * c.trailLength
+    );
+    simCTX.stroke();
+    
+    simCTX.fillStyle = '#FFFFFF';
+    simCTX.beginPath();
+    simCTX.arc(c.x, c.y, c.size * 0.6, 0, Math.PI * 2);
+    simCTX.fill();
+    
+    simCTX.restore();
+}
+
+function drawMaximalistWelcome() {
+    welcomeAnimFrame += 0.016;
+    
+    const gradient = simCTX.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, '#8B0000');
+    gradient.addColorStop(0.4, '#FF1493');
+    gradient.addColorStop(0.7, '#FF6600');
+    gradient.addColorStop(1, '#FFD700');
+    simCTX.fillStyle = gradient;
+    simCTX.fillRect(0, 0, canvas.width, canvas.height);
+    
+    stars.forEach(drawStar);
+    
+    mangoes.forEach(m => {
+        m.x += m.speedX;
+        m.y += m.speedY + Math.sin(welcomeAnimFrame * 2 + m.phase) * m.amplitude * 0.02;
+        
+        const margin = 60;
+        if (m.x < -margin || m.x > canvas.width + margin || 
+            m.y < -margin || m.y > canvas.height + margin) {
+            const side = Math.floor(Math.random() * 4);
+            if (side === 0) { m.x = canvas.width + 30; m.y = Math.random() * canvas.height; }
+            else if (side === 1) { m.x = -30; m.y = Math.random() * canvas.height; }
+            else if (side === 2) { m.x = Math.random() * canvas.width; m.y = -30; }
+            else { m.x = Math.random() * canvas.width; m.y = canvas.height + 30; }
+        }
+        drawMango(m);
+    });
+    
+    crystals.forEach(c => {
+        c.x += c.speedX;
+        c.y += c.speedY;
+        c.rotation += c.rotationSpeed;
+        
+        const margin = 60;
+        if (c.x < -margin || c.x > canvas.width + margin || 
+            c.y < -margin || c.y > canvas.height + margin) {
+            const side = Math.floor(Math.random() * 4);
+            if (side === 0) { c.x = canvas.width + 30; c.y = Math.random() * canvas.height; }
+            else if (side === 1) { c.x = -30; c.y = Math.random() * canvas.height; }
+            else if (side === 2) { c.x = Math.random() * canvas.width; c.y = -30; }
+            else { c.x = Math.random() * canvas.width; c.y = canvas.height + 30; }
+        }
+        drawCrystal(c);
+    });
+    
+    shootingStars.forEach(s => {
+        if (!s.active) {
+            s.cooldown--;
+            if (s.cooldown <= 0) {
+                s.active = true;
+                s.x = canvas.width + 50;
+                s.y = Math.random() * canvas.height * 0.5;
+            }
+        } else {
+            s.x -= Math.cos(s.angle) * s.speed;
+            s.y -= Math.sin(s.angle) * s.speed;
+            if (s.x < -100 || s.y < -100) {
+                s.active = false;
+                s.cooldown = 150 + Math.random() * 200;
+            }
+        }
+        drawShootingStar(s);
+    });
+    
+    atoms.forEach(a => {
+        a.rotation += a.rotationSpeed;
+        drawAtom(a);
+    });
+    
+    butterflies.forEach(b => {
+        b.x += b.speedX;
+        b.y += Math.sin(welcomeAnimFrame * 2 + b.phase) * 0.5;
+        if ((b.speedX > 0 && b.x > canvas.width + 50) || (b.speedX < 0 && b.x < -50)) {
+            b.x = b.speedX > 0 ? -30 : canvas.width + 30;
+            b.y = Math.random() * canvas.height;
+        }
+        drawButterfly(b);
+    });
+    
+    sparkles.forEach(s => {
+        if (s.delay > 0) {
+            s.delay--;
+        } else {
+            s.life++;
+            if (s.life > s.maxLife) {
+                s.x = Math.random() * canvas.width;
+                s.y = Math.random() * canvas.height;
+                s.life = 0;
+                s.maxLife = 30 + Math.random() * 40;
+            }
+        }
+        drawSparkle(s);
+    });
+    
+    comets.forEach(c => {
+        if (!c.active) {
+            c.cooldown--;
+            if (c.cooldown <= 0) {
+                c.active = true;
+                c.x = -50;
+                c.y = Math.random() * canvas.height * 0.4;
+                c.color = ['#00FFFF', '#FF00FF', '#FFD700', '#FF69B4', '#39FF14'][Math.floor(Math.random() * 5)];
+            }
+        } else {
+            c.x += Math.cos(c.angle) * c.speed;
+            c.y += Math.sin(c.angle) * c.speed;
+            if (c.x > canvas.width + 100 || c.y > canvas.height + 100) {
+                c.active = false;
+                c.cooldown = 200 + Math.random() * 300;
+            }
+        }
+        drawComet(c);
+    });
+    
+    const cy = canvas.height / 2;
+    const cx = canvas.width / 2;
+    
+    const glowCycle = (Math.floor(welcomeAnimFrame * 2) % 4);
+    const glowColors = ['#00FFFF', '#FF00FF', '#FFD700', '#39FF14'];
+    const currentGlow = glowColors[glowCycle];
+    
+    const bobOffset = Math.sin(welcomeAnimFrame * 3) * 3;
+    
+    simCTX.save();
+    simCTX.shadowColor = '#000000';
+    simCTX.shadowBlur = 0;
+    simCTX.shadowOffsetX = 4;
+    simCTX.shadowOffsetY = 4;
+    simCTX.fillStyle = '#000000';
+    simCTX.font = '100px "ComputerModernSans", sans-serif';
+    simCTX.textAlign = 'center';
+    simCTX.fillText('SimMatery', cx + 4, cy - 50 + bobOffset + 4);
+    simCTX.restore();
+    
+    simCTX.save();
+    simCTX.shadowColor = '#FF00FF';
+    simCTX.shadowBlur = 15;
+    simCTX.fillStyle = '#FF00FF';
+    simCTX.font = '100px "ComputerModernSans", sans-serif';
+    simCTX.textAlign = 'center';
+    simCTX.fillText('SimMatery', cx - 3, cy - 50 + bobOffset - 3);
+    simCTX.restore();
+    
+    simCTX.save();
+    simCTX.shadowColor = '#00FFFF';
+    simCTX.shadowBlur = 15;
+    simCTX.fillStyle = '#00FFFF';
+    simCTX.font = '100px "ComputerModernSans", sans-serif';
+    simCTX.textAlign = 'center';
+    simCTX.fillText('SimMatery', cx + 3, cy - 50 + bobOffset + 3);
+    simCTX.restore();
+    
+    simCTX.save();
+    simCTX.shadowColor = currentGlow;
+    simCTX.shadowBlur = 25;
+    const titleGradient = simCTX.createLinearGradient(cx - 150, 0, cx + 150, 0);
+    titleGradient.addColorStop(0, '#FF1493');
+    titleGradient.addColorStop(0.5, '#FFD700');
+    titleGradient.addColorStop(1, '#00FFFF');
+    simCTX.fillStyle = titleGradient;
+    simCTX.font = '100px "ComputerModernSans", sans-serif';
+    simCTX.textAlign = 'center';
+    simCTX.fillText('SimMatery', cx, cy - 50 + bobOffset);
+    simCTX.restore();
+    
+    const time = welcomeAnimFrame;
+    simCTX.strokeStyle = '#FFD700';
+    simCTX.lineWidth = 3;
+    simCTX.shadowColor = '#FFD700';
+    simCTX.shadowBlur = 10;
+    
+    const borderY = 30;
+    simCTX.beginPath();
+    for (let x = 0; x <= canvas.width; x += 5) {
+        const y = borderY + Math.sin(x * 0.02 + time * 2) * 8;
+        if (x === 0) simCTX.moveTo(x, y);
+        else simCTX.lineTo(x, y);
+    }
+    simCTX.stroke();
+    
+    const bottomBorderY = canvas.height - 30;
+    simCTX.beginPath();
+    for (let x = 0; x <= canvas.width; x += 5) {
+        const y = bottomBorderY + Math.sin(x * 0.02 + time * 2 + Math.PI) * 8;
+        if (x === 0) simCTX.moveTo(x, y);
+        else simCTX.lineTo(x, y);
+    }
+    simCTX.stroke();
+    
+    if (!welcomeRunning) {
+        welcomeRunning = true;
+        animateWelcome();
+    }
+}
+
+function animateWelcome() {
+    if (!welcomeRunning) {
+        welcomeAnimId = null;
+        return;
+    }
+    displayWelcomeCanvas();
+    welcomeAnimId = requestAnimationFrame(animateWelcome);
+}
+
 function displayWelcomeCanvas() {
+    if (USE_MAXIMALIST_WELCOME) {
+        drawMaximalistWelcome();
+    } else {
+        drawSimpleWelcome();
+    }
+}
+
+function drawSimpleWelcome() {
     simCTX.fillStyle = '#0f172a';
     simCTX.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -262,7 +870,7 @@ function displayWelcomeCanvas() {
     simCTX.fillStyle = '#60a5fa';
     simCTX.font = 'bold 48px -apple-system, BlinkMacSystemFont, sans-serif';
     simCTX.textAlign = 'center';
-    simCTX.fillText('SimMatery', cx, cy - 40);
+    simCTX.fillText('SimMatery', cx, cy - 50);
 
     simCTX.fillStyle = '#d1d5db';
     simCTX.font = '18px -apple-system, BlinkMacSystemFont, sans-serif';
@@ -676,7 +1284,7 @@ function initGray() {
          // Add a small solid seed at center
          const cx = Math.floor(GridSizeX / 2);
          const cy = Math.floor(GridSizeY / 2);
-         const radius = 5;
+         const radius = 3;
          for (let y = Math.max(0, cy - radius); y < Math.min(GridSizeY, cy + radius); y++) {
              for (let x = Math.max(0, cx - radius); x < Math.min(GridSizeX, cx + radius); x++) {
                  if ((x - cx)*(x - cx) + (y - cy)*(y - cy) <= radius*radius) {
@@ -1125,6 +1733,7 @@ window.onload = () => {
     dropdownContent.querySelectorAll('.dropdown-item').forEach(item => {
         item.addEventListener('click', function(event) {
             event.preventDefault();
+            stopWelcomeAnimation();
             const selectedModel = this.getAttribute('data-model');
             const prevModel = simModel;
 
@@ -1199,7 +1808,27 @@ window.onload = () => {
     // Defer initialization to ensure DOM is ready
     setTimeout(() => {
         sim_resizeCanvas();
+        if (USE_MAXIMALIST_WELCOME) {
+            initWelcomeParticles();
+        }
         displayWelcomeCanvas();
         sim_Stop();
     }, 100);
 };
+
+function stopWelcomeAnimation() {
+    welcomeRunning = false;
+    if (welcomeAnimId) {
+        cancelAnimationFrame(welcomeAnimId);
+        welcomeAnimId = null;
+    }
+}
+
+function restartWelcomeAnimation() {
+    if (welcomeAnimId) {
+        cancelAnimationFrame(welcomeAnimId);
+    }
+    welcomeAnimFrame = 0;
+    welcomeRunning = true;
+    animateWelcome();
+}

@@ -42,6 +42,24 @@
         <canvas id="canvas"></canvas>
     </div>
 </div>
+<script>
+    async function loadComputerModernFonts() {
+        const fontUrl = 'https://chirantandip.github.io/font/';
+        
+        const fontRegular = new FontFace('ComputerModernSans', 
+            `url(${fontUrl}cmunss.ttf)`, 'normal');
+        await fontRegular.load();
+        document.fonts.add(fontRegular);
+        
+        const fontBold = new FontFace('ComputerModernSans', 
+            `url(${fontUrl}cmunbss.ttf)`, 'bold');
+        await fontBold.load();
+        document.fonts.add(fontBold);
+        
+        document.body.classList.add('fonts-loaded');
+    }
+    loadComputerModernFonts();
+</script>
 <script src="app.js"></script>
 </body>
 </html>

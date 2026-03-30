@@ -1,4 +1,18 @@
 /* Generated */
+@font-face {
+    font-family: 'ComputerModernSans';
+    src: url('https://chirantandip.github.io/font/cmunss.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'ComputerModernSans';
+    src: url('https://chirantandip.github.io/font/cmunbss.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
 :root {
     --primary-color: #3b82f6;
     --primary-hover: #2563eb;
@@ -19,7 +33,7 @@
 /* Section Title */
 .section-title {
     font-size: 12px;
-    font-weight: 600;
+    font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: var(--text-muted);
@@ -29,7 +43,7 @@
 
  body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    font-family: 'ComputerModernSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     background-color: #f3f4f6;
     min-height: 100vh;
     display: flex;
@@ -82,7 +96,7 @@
 
 .sidebar-header {
     font-size: 18px;
-    font-weight: 600;
+    font-weight: bold;
     margin-bottom: 16px;
     text-align: center;
     padding-bottom: 12px;
@@ -127,13 +141,13 @@
     display: flex;
     justify-content: space-between;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: bold;
     color: var(--text-secondary);
 }
 
 .parameter-value {
     color: var(--primary-color);
-    font-weight: 600;
+    font-weight: bold;
 }
 
 .sidebar-slider {
@@ -171,7 +185,7 @@
     display: block;
     margin-top: 8px;
     margin-bottom: 4px;
-    font-weight: 600;
+    font-weight: bold;
     font-size: 14px;
     color: var(--text-secondary);
     letter-spacing: 0.3px;
@@ -265,7 +279,7 @@
 /* Buttons */
 .sidebar-button {
     padding: 12px 20px;
-    font-weight: 600;
+    font-weight: bold;
     border-radius: 8px;
     display: flex;
     align-items: center;
